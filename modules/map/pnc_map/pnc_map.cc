@@ -558,8 +558,17 @@ bool PncMap::GetNearestPointFromRouting(const VehicleState &state,
   }
   // get nearest_wayponints for current position
   double min_distance = std::numeric_limits<double>::infinity();
+  auto lane_count = 0;
   for (const auto &lane : lanes) {
+    lane_count++;
+    AINFO << "Working on the lane " << lane_count; 
+    AINFO << "The ID of the lane is: " << lane->id().id();
     if (routing_lane_ids_.count(lane->id().id()) == 0) {
+      AINFO << "The routing_lane_ids contains: ";
+      for (auto element: routing_lane_ids_) {
+          AINFO << element;
+      }
+      AINFO << "Routing_lane_ids count was equal to 0";
       continue;
     }
     {
@@ -570,6 +579,7 @@ bool PncMap::GetNearestPointFromRouting(const VehicleState &state,
       }
       constexpr double kEpsilon = 1e-6;
       if (s > (lane->total_length() + kEpsilon) || (s + kEpsilon) < 0.0) {
+        AINFO << "total lane length + kEpsilon was bad.";
         continue;
       }
     }
@@ -577,6 +587,7 @@ bool PncMap::GetNearestPointFromRouting(const VehicleState &state,
     common::PointENU map_point =
         lane->GetNearestPoint({point.x(), point.y()}, &distance);
     if (distance < min_distance) {
+      AINFO << "Distance was less than min_distance for lane ID: " << lane_count;
       min_distance = distance;
       double s = 0.0;
       double l = 0.0;
@@ -587,6 +598,8 @@ bool PncMap::GetNearestPointFromRouting(const VehicleState &state,
       }
       waypoint->lane = lane;
       waypoint->s = s;
+    } else {
+      AINFO << "Distance was greater than min_distance for lane ID: " << lane_count;
     }
   }
   if (waypoint->lane == nullptr) {

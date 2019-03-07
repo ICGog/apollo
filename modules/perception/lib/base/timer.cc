@@ -34,7 +34,7 @@ uint64_t Timer::End(const string &msg) {
   uint64_t elapsed_time =
       duration_cast<milliseconds>(end_time_ - start_time_).count();
 
-  ADEBUG << "TIMER " << msg << " elapsed_time: " << elapsed_time << " ms";
+  AINFO << "TIMER " << msg << " elapsed_time: " << elapsed_time << " ms";
 
   // start new timer.
   start_time_ = end_time_;

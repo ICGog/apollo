@@ -20,6 +20,7 @@ cc_library(
         "//modules/common/vehicle_state:vehicle_state_provider",
         "//modules/map/hdmap:hdmap_util",
         "//modules/perception/proto:perception_proto",
+        "//modules/localization/proto:localization_proto",
         "//modules/planning/common:planning_common",
         "//modules/planning/common/trajectory:trajectory_stitcher",
         "//modules/planning/planner/em:em_planner",

@@ -55,7 +55,7 @@ bool LidarProcessSubnode::InitInternal() {
   if (inited_) {
     return true;
   }
-
+  last_pc_seq_num_ = 0;
   RegistAllAlgorithm();
 
   if (!InitFrameDependence()) {
@@ -90,12 +90,18 @@ bool LidarProcessSubnode::InitInternal() {
 
 void LidarProcessSubnode::OnPointCloud(
     const sensor_msgs::PointCloud2& message) {
+  auto __start_time = std::chrono::system_clock::now();
   AINFO << "process OnPointCloud.";
   PERF_FUNCTION("LidarProcessSubnode");
   if (!inited_) {
     AERROR << "the LidarProcessSubnode has not been Init";
     return;
   }
+  uint32_t cur_seq_num = message.header.seq;
+  if (last_pc_seq_num_ != 0 && cur_seq_num != last_pc_seq_num_ + 1) {
+    AINFO << "Last sequence num: " << last_pc_seq_num_ << " sequence num: " << cur_seq_num;
+  }
+  last_pc_seq_num_ = cur_seq_num;
   const double kTimeStamp = message.header.stamp.toSec();
   timestamp_ = kTimeStamp;
   ++seq_num_;
@@ -195,6 +201,9 @@ void LidarProcessSubnode::OnPointCloud(
   }
   ADEBUG << "call object_builder succ.";
   PERF_BLOCK_END("lidar_object_builder");
+  auto __end_detection = std::chrono::system_clock::now();
+  auto __detection_runtime = std::chrono::duration_cast<std::chrono::milliseconds>(__end_detection - __start_time).count();
+  AINFO << std::fixed << "[SUKRIT] Just the detection for the timestamp " << kTimeStamp << " took: " << __detection_runtime << " ms.";
 
   /// call tracker
   if (tracker_ != nullptr) {
@@ -228,6 +237,9 @@ void LidarProcessSubnode::OnPointCloud(
   ADEBUG << "lidar process succ.";
   PERF_BLOCK_END("lidar_type_fuser");
 
+  auto __end_time = std::chrono::system_clock::now();
+  auto __runtime_diff = std::chrono::duration_cast<std::chrono::milliseconds>(__end_time - __start_time).count();
+  AINFO << std::fixed << "[SUKRIT] Obstacle detection for the timestamp " << kTimeStamp << " took: " << __runtime_diff << " ms.";
   PublishDataAndEvent(timestamp_, out_sensor_objects);
   return;
 }

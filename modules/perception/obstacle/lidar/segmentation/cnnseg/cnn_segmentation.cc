@@ -157,18 +157,26 @@ bool CNNSegmentation::Segment(const pcl_util::PointCloudPtr& pc_ptr,
   PERF_BLOCK_START();
 
   // generate raw features
+  auto __start_feature_extraction = std::chrono::system_clock::now();
   if (use_full_cloud_) {
     feature_generator_->Generate(options.origin_cloud);
   } else {
     feature_generator_->Generate(pc_ptr);
   }
+  auto __end_feature_extraction = std::chrono::system_clock::now();
+  auto __feature_extract = std::chrono::duration_cast<std::chrono::milliseconds>(__end_feature_extraction - __start_feature_extraction).count();
+  AINFO << "[SUKRIT] Feature extraction took: " << __feature_extract << " ms.";
   PERF_BLOCK_END("[CNNSeg] feature generation");
 
 // network forward process
 #ifdef USE_CAFFE_GPU
   caffe::Caffe::set_mode(caffe::Caffe::GPU);
 #endif
+  auto __start_time = std::chrono::system_clock::now();
   caffe_net_->Forward();
+  auto __end_time = std::chrono::system_clock::now();
+  auto __runtime_diff = std::chrono::duration_cast<std::chrono::milliseconds>(__end_time - __start_time).count();
+  AINFO << std::fixed << "[SUKRIT] CNN Segmentation took: " << __runtime_diff << " ms.";
   PERF_BLOCK_END("[CNNSeg] CNN forward");
 
   // clutser points and construct segments/objects

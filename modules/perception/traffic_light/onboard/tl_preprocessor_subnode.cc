@@ -117,6 +117,7 @@ bool TLPreprocessorSubnode::InitHdmap() {
     AERROR << "TLPreprocessorSubnode init hd-map failed.";
     return false;
   }
+  AINFO << "HDMap initialized with: " << hd_map_->location();
   return true;
 }
 
@@ -124,6 +125,8 @@ bool TLPreprocessorSubnode::AddDataAndPublishEvent(
     const std::shared_ptr<ImageLights> &data, const CameraId &camera_id,
     double timestamp) {
   // add data down-stream
+  const int c_id = static_cast<int>(data->camera_id);
+  AINFO << "ADDING DATA FOR CAMERA: " << camera_id << " who " << c_id;
   std::string device_str = kCameraIdToStr.at(camera_id);
   std::string key;
   if (!SubnodeHelper::ProduceSharedDataKey(timestamp, device_str, &key)) {
@@ -171,12 +174,14 @@ void TLPreprocessorSubnode::SubCameraImage(
   std::shared_ptr<Image> image(new Image);
   cv::Mat cv_mat;
   double timestamp = msg->header.stamp.toSec();
+  const int c_id = static_cast<int>(camera_id);
+  AINFO << "SUBCAMERAIMAGE: " << c_id;
   image->Init(timestamp, camera_id, msg);
   if (FLAGS_output_raw_img) {
     // user should create folders
     image->GenerateMat();
     char filename[100];
-    snprintf(filename, sizeof(filename), "%s/%lf.jpg",
+    snprintf(filename, sizeof(filename), "/apollo/%s/%lf.jpg",
              image->camera_id_str().c_str(),
              timestamp);
     cv::imwrite(filename, image->mat());
@@ -235,14 +240,13 @@ void TLPreprocessorSubnode::SubCameraImage(
           << ", camera_id: " + kCameraIdToStr.at(camera_id)
           << ", debug_string: " << debug_string;
   }
-
+  
   if (!should_pub) {
     AINFO << "TLPreprocessorSubnode not publish image, ts:"
           << GLOG_TIMESTAMP(image->ts())
           << ", camera_id: " << kCameraIdToStr.at(camera_id);
     return;
   }
-
   // verify lights projection based on image time
   if (!VerifyLightsProjection(image_lights)) {
     AINFO << "verify_lights_projection on image failed, ts:"
@@ -256,6 +260,8 @@ void TLPreprocessorSubnode::SubCameraImage(
 
   image_lights->preprocess_receive_timestamp = sub_camera_image_start_ts;
   image_lights->preprocess_send_timestamp = TimeUtil::GetCurrentTime();
+  //XXX(ionel): Added the line bellow.
+  // image_lights->camera_id = camera_id;
   if (AddDataAndPublishEvent(image_lights, camera_id, image->ts())) {
     preprocessor_.set_last_pub_camera_id(camera_id);
     AINFO << "TLPreprocessorSubnode::sub_camera_image msg_time: "
@@ -277,7 +283,7 @@ bool TLPreprocessorSubnode::GetSignals(double ts, CarPose *pose,
            << GLOG_TIMESTAMP(ts);
     return false;
   }
-  AINFO << "camera_selection get position\n " << std::setprecision(12)
+  AINFO << "camera_selection get position " << std::setprecision(12)
         << pose->pose();
 
   // get signals

@@ -41,6 +41,7 @@ using apollo::common::VehicleStateProvider;
 using apollo::common::VehicleState;
 using apollo::common::adapter::AdapterManager;
 using apollo::common::time::Clock;
+using ::apollo::localization::LocalizationEstimate;
 
 std::string Planning::Name() const { return "planning"; }
 
@@ -117,7 +118,14 @@ Status Planning::Init() {
         "planning is not initialized with config : " + config_.DebugString());
   }
 
+  AdapterManager::AddLocalizationCallback(&Planning::OnLocalization, this);
+
   return planner_->Init(config_);
+}
+
+void Planning::OnLocalization(const LocalizationEstimate& localization) {
+  //  AINFO << "Received a localization message ["
+  //        << localization.ShortDebugString() << "].";
 }
 
 bool Planning::IsVehicleStateValid(const VehicleState& vehicle_state) {
@@ -173,6 +181,8 @@ void Planning::RunOnce() {
   // snapshot all coming data
   AdapterManager::Observe();
 
+  AINFO << "Has received: " << AdapterManager::GetLocalization()->HasReceived()
+	<< " empty " << AdapterManager::GetLocalization()->Empty();
   ADCTrajectory not_ready_pb;
   auto* not_ready = not_ready_pb.mutable_decision()
                         ->mutable_main_decision()

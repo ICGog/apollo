@@ -78,17 +78,17 @@ else
 fi
 
 if [ -z "${DOCKER_REPO}" ]; then
-    DOCKER_REPO=apolloauto/apollo
+    DOCKER_REPO=sukritkalra/nvidia-apollo
 fi
 
 IMG=${DOCKER_REPO}:$VERSION
 APOLLO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 
-if [ ! -e /apollo ]; then
-    sudo ln -sf ${APOLLO_ROOT_DIR} /apollo
-fi
-
-echo "/apollo/data/core/core_%e.%p" | sudo tee /proc/sys/kernel/core_pattern
+#if [ ! -e /apollo ]; then
+#    sudo ln -sf ${APOLLO_ROOT_DIR} /apollo
+#fi
+#
+#echo "/apollo/data/core/core_%e.%p" | sudo tee /proc/sys/kernel/core_pattern
 
 source ${APOLLO_ROOT_DIR}/scripts/apollo_base.sh
 
@@ -138,7 +138,7 @@ function main(){
     if [ ! -d "$HOME/.cache" ];then
         mkdir "$HOME/.cache"
     fi
-    docker run -it \
+    nvidia-docker run -it \
         -d \
         --privileged \
         --name apollo_dev \
@@ -156,7 +156,6 @@ function main(){
         -v /etc/localtime:/etc/localtime:ro \
         -v /usr/src:/usr/src \
         -v /lib/modules:/lib/modules \
-        --net host \
         -w /apollo \
         ${devices} \
         --add-host in_dev_docker:127.0.0.1 \
@@ -165,9 +164,9 @@ function main(){
         --shm-size 512M \
         $IMG \
         /bin/bash
-    if [ "${USER}" != "root" ]; then
-        docker exec apollo_dev bash -c '/apollo/scripts/docker_adduser.sh'
-    fi
+    #if [ "${USER}" != "root" ]; then
+    #    docker exec apollo_dev bash -c '/apollo/scripts/docker_adduser.sh'
+    #fi
 }
 
 main

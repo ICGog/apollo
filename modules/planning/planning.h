@@ -33,6 +33,7 @@
 #include "modules/planning/common/trajectory/publishable_trajectory.h"
 #include "modules/planning/planner/planner.h"
 #include "modules/planning/planning_interface.h"
+#include "modules/localization/proto/localization.pb.h"
 
 /**
  * @namespace apollo::planning
@@ -83,6 +84,7 @@ class Planning : public PlanningInterface {
    */
   void SetLastPublishableTrajectory(const ADCTrajectory& adc_trajectory);
 
+  void OnLocalization(const localization::LocalizationEstimate &localization);
  private:
   // Watch dog timer
   void OnTimer(const ros::TimerEvent&);

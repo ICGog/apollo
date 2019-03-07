@@ -68,6 +68,8 @@ Status Prediction::Init() {
            << adapter_conf_.ShortDebugString();
   }
 
+  last_localization_seq_num_ = 0;
+  last_perception_seq_num_ = 0;
   // Initialization of all managers
   AdapterManager::Init(adapter_conf_);
   ContainerManager::instance()->Init(adapter_conf_);
@@ -94,6 +96,12 @@ Status Prediction::Start() {
 void Prediction::Stop() {}
 
 void Prediction::OnLocalization(const LocalizationEstimate& localization) {
+  uint32_t seq_num = localization.header().sequence_num();
+  if (last_localization_seq_num_ != 0 && seq_num - 1 != last_localization_seq_num_) {
+    AINFO << "Last sequence num: " << last_localization_seq_num_ << " sequence num: " << seq_num;
+  }
+  last_localization_seq_num_ = seq_num;
+
   ObstaclesContainer* obstacles_container = dynamic_cast<ObstaclesContainer*>(
       ContainerManager::instance()->GetContainer(
           AdapterConfig::PERCEPTION_OBSTACLES));
@@ -128,15 +136,26 @@ void Prediction::OnPlanning(const planning::ADCTrajectory& adc_trajectory) {
 void Prediction::RunOnce(const PerceptionObstacles& perception_obstacles) {
   ADEBUG << "Received a perception message ["
          << perception_obstacles.ShortDebugString() << "].";
+  uint32_t seq_num = perception_obstacles.header().sequence_num();
+  if (last_perception_seq_num_ != 0 && seq_num - 1 != last_perception_seq_num_) {
+    AINFO << "Last sequence num: " << last_perception_seq_num_ << " sequence num: " << seq_num;
+  }
+  last_perception_seq_num_ = seq_num;
 
   double start_timestamp = Clock::NowInSeconds();
+
   ObstaclesContainer* obstacles_container = dynamic_cast<ObstaclesContainer*>(
       ContainerManager::instance()->GetContainer(
           AdapterConfig::PERCEPTION_OBSTACLES));
+  // TODO(ionel): Check why it takes a bit of time.
   CHECK_NOTNULL(obstacles_container);
   obstacles_container->Insert(perception_obstacles);
+  double evaluation_start_timestamp = Clock::NowInSeconds();
   EvaluatorManager::instance()->Run(perception_obstacles);
+  double predictor_start_timestamp = Clock::NowInSeconds();
+  // TODO(ionel): Check why it takes a bit of time.
   PredictorManager::instance()->Run(perception_obstacles);
+  double predictor_end_timestamp = Clock::NowInSeconds();
 
   auto prediction_obstacles =
       PredictorManager::instance()->prediction_obstacles();
@@ -155,6 +174,21 @@ void Prediction::RunOnce(const PerceptionObstacles& perception_obstacles) {
       }
     }
   }
+
+  double prediction_end_time = Clock::NowInSeconds();
+  double prediction_runtime = (prediction_end_time - start_timestamp) * 1000.0;
+
+  AINFO << "Pre evaluator runtime (ms): " << std::fixed << std::setprecision(9)
+	<< (evaluation_start_timestamp - start_timestamp) * 1000.0;
+  AINFO << "Evaluator runtime (ms): " << std::fixed << std::setprecision(9)
+	<< (predictor_start_timestamp - evaluation_start_timestamp) * 1000.0;
+  AINFO << "Predictor runtime (ms): " << std::fixed << std::setprecision(9)
+	<< (predictor_end_timestamp - predictor_start_timestamp) * 1000.0;
+  AINFO << "Post predictor runtime (ms): " << std::fixed << std::setprecision(9)
+	<< (prediction_end_time - predictor_end_timestamp) * 1000.0;
+  AINFO << "Prediction runtime (ms): " << prediction_runtime
+        << " for obstacles sent at (sec): "
+	<< std::fixed << std::setprecision(9) << perception_obstacles.header().timestamp_sec();
 
   Publish(&prediction_obstacles);
 

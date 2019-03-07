@@ -110,6 +110,13 @@ void RadarProcessSubnode::OnRadar(const ContiRadar &radar_obs) {
   PERF_FUNCTION("RadarProcess");
   ContiRadar radar_obs_proto = radar_obs;
   double timestamp = radar_obs_proto.header().timestamp_sec();
+
+  uint32_t cur_seq_num = radar_obs.header().sequence_num();
+  if (last_rad_seq_num_ != 0 && cur_seq_num != last_rad_seq_num_ + 1) {
+    AINFO << "Last sequence num: " << last_rad_seq_num_ << " sequence num: " << cur_seq_num;
+  }
+  last_rad_seq_num_ = cur_seq_num;
+
   double unix_timestamp = timestamp;
   const double cur_time = common::time::Clock::NowInSeconds();
   const double start_latency = (cur_time - unix_timestamp) * 1e3;
@@ -206,6 +213,12 @@ void RadarProcessSubnode::OnRadar(const ContiRadar &radar_obs) {
 
 void RadarProcessSubnode::OnLocalization(
   const apollo::localization::LocalizationEstimate &localization) {
+  uint32_t cur_seq_num = localization.header().sequence_num();
+  if (last_loc_seq_num_ != 0 && cur_seq_num != last_loc_seq_num_ + 1) {
+    AINFO << "Last sequence num: " << last_loc_seq_num_ << " sequence num: " << cur_seq_num;
+  }
+  last_loc_seq_num_ = cur_seq_num;
+
   double timestamp = localization.header().timestamp_sec();
   AINFO << "localization timestamp:" << GLOG_TIMESTAMP(timestamp);
   LocalizationPair localization_pair;
@@ -231,7 +244,7 @@ bool RadarProcessSubnode::GetCarLinearSpeed(double timestamp,
           << "timestamp (" << localization_buffer_.front().first << ").";
     return false;
   }
-  if (localization_buffer_.back().first + 0.1 < timestamp) {
+  if (localization_buffer_.back().first + 0.3 < timestamp) {
     AWARN << "Timestamp (" << GLOG_TIMESTAMP(timestamp)
           << ") is newer than the latest "
           << "timestamp (" << localization_buffer_.back().first << ").";

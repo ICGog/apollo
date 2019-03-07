@@ -163,6 +163,7 @@ bool TLPreprocessor::SyncImage(const ImageSharedPtr &image,
   auto cached_lights_ptr = cached_lights_.rbegin();
   for (; cached_lights_ptr != cached_lights_.rend(); ++cached_lights_ptr) {
     double light_ts = (*cached_lights_ptr)->timestamp;
+    AINFO << "SyncImage light ts: " << light_ts << " image ts: " << image_ts;
     if (fabs(light_ts - image_ts) < sync_interval_seconds_) {
       find_loc = true;
       auto proj_cam_id = static_cast<int>((*cached_lights_ptr)->camera_id);
@@ -273,6 +274,7 @@ bool TLPreprocessor::SyncImage(const ImageSharedPtr &image,
       (*image_lights)->diff_image_pose_ts = diff_image_pose_ts;
       (*image_lights)->is_pose_valid = no_signal;
       (*image_lights)->num_signals = 0;
+      (*image_lights)->camera_id = image->camera_id();
     }
   }
   // sync fail may because:

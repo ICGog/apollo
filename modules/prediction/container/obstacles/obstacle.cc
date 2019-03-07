@@ -30,6 +30,7 @@
 #include "modules/prediction/common/prediction_map.h"
 #include "modules/prediction/common/road_graph.h"
 #include "modules/prediction/network/rnn_model/rnn_model.h"
+#include "modules/common/time/time.h"
 
 namespace apollo {
 namespace prediction {
@@ -41,6 +42,7 @@ using apollo::common::util::FindOrDie;
 using apollo::common::util::FindOrNull;
 using apollo::hdmap::LaneInfo;
 using apollo::perception::PerceptionObstacle;
+using ::apollo::common::time::Clock;
 
 namespace {
 
@@ -126,14 +128,14 @@ bool Obstacle::IsNearJunction() {
 
 void Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
                       const double timestamp) {
-  if (feature_history_.size() > 0 &&
-      timestamp <= feature_history_.front().timestamp()) {
-    AERROR << "Obstacle [" << id_ << "] received an older frame ["
-           << std::setprecision(20) << timestamp
-           << "] than the most recent timestamp [ "
-           << feature_history_.front().timestamp() << "].";
-    return;
-  }
+  // if (feature_history_.size() > 0 &&
+  //     timestamp <= feature_history_.front().timestamp()) {
+  //   AERROR << "Obstacle [" << id_ << "] received an older frame ["
+  //          << std::setprecision(20) << timestamp
+  //          << "] than the most recent timestamp [ "
+  //          << feature_history_.front().timestamp() << "].";
+  //   return;
+  // }
 
   Feature feature;
   if (SetId(perception_obstacle, &feature) == ErrorCode::PREDICTION_ERROR) {
@@ -142,6 +144,7 @@ void Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
   if (SetType(perception_obstacle) == ErrorCode::PREDICTION_ERROR) {
     return;
   }
+  // double start_time = Clock::NowInSeconds();
   SetTimestamp(perception_obstacle, timestamp, &feature);
   SetPosition(perception_obstacle, &feature);
   SetVelocity(perception_obstacle, &feature);
@@ -164,6 +167,11 @@ void Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
   InsertFeatureToHistory(&feature);
   SetMotionStatus();
   Trim();
+  // double end_time = Clock::NowInSeconds();
+  // AINFO << "Obstacle " << type_ << " history length " << feature_history_.size()
+  //       << " insert runtime (ms): "
+  //       << std::fixed << std::setprecision(9)
+  // 	<< (end_time - start_time) * 1000.0;
 }
 
 ErrorCode Obstacle::SetId(const PerceptionObstacle& perception_obstacle,

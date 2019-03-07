@@ -22,9 +22,12 @@
 #include "modules/perception/obstacle/radar/modest/object_builder.h"
 #include "modules/perception/obstacle/radar/modest/radar_util.h"
 #include "modules/perception/common/perception_gflags.h"
+#include "modules/common/time/time.h"
 
 namespace apollo {
 namespace perception {
+
+using ::apollo::common::time::Clock;
 
 bool ModestRadarDetector::Init() {
   using apollo::perception::ConfigManager;
@@ -164,6 +167,7 @@ bool ModestRadarDetector::Detect(const ContiRadar &raw_obstacles,
                                  const std::vector<PolygonDType> &map_polygons,
                                  const RadarDetectorOptions &options,
                                  std::vector<ObjectPtr> *objects) {
+  double start_time = Clock::NowInSeconds();
   if (objects == nullptr) {
     AERROR << "Objects is nullptr";
     return false;
@@ -195,7 +199,9 @@ bool ModestRadarDetector::Detect(const ContiRadar &raw_obstacles,
   radar_tracker_->Process(radar_objects);
   AINFO << "After process, object size: " << radar_objects.objects.size();
   CollectRadarResult(objects);
-  AINFO << "radar object size: " << objects->size();
+  double end_time = Clock::NowInSeconds();
+  AINFO << "Radar detector found " << objects->size() << " in runtime (ms): "
+	<< std::fixed << std::setprecision(9) << (end_time - start_time) * 1000.0;
   return true;
 }
 

@@ -38,6 +38,9 @@ cc_test(
 cc_library(
     name = "lru_cache",
     hdrs = ["lru_cache.h"],
+    deps = [
+        "//modules/common:log",
+    ],
 )
 
 cc_library(

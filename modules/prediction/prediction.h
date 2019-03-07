@@ -86,6 +86,8 @@ class Prediction : public PredictionInterface {
       const ::apollo::common::TrajectoryPoint &trajectory_point);
 
  private:
+  uint32_t last_perception_seq_num_;
+  uint32_t last_localization_seq_num_;
   PredictionConf prediction_conf_;
   common::adapter::AdapterManagerConfig adapter_conf_;
 };

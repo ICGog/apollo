@@ -20,18 +20,21 @@
 
 #include "modules/common/math/math_utils.h"
 #include "modules/prediction/common/prediction_gflags.h"
+#include "modules/common/time/time.h"
 
 namespace apollo {
 namespace prediction {
 
 using apollo::perception::PerceptionObstacle;
 using apollo::perception::PerceptionObstacles;
+using ::apollo::common::time::Clock;
 
 ObstaclesContainer::ObstaclesContainer()
     : obstacles_(FLAGS_max_num_obstacles) {}
 
 void ObstaclesContainer::Insert(const ::google::protobuf::Message& message) {
   ADEBUG << "message: " << message.ShortDebugString();
+  double start_time = Clock::NowInSeconds();
   const PerceptionObstacles& perception_obstacles =
       dynamic_cast<const PerceptionObstacles&>(message);
   double timestamp = 0.0;
@@ -58,6 +61,11 @@ void ObstaclesContainer::Insert(const ::google::protobuf::Message& message) {
     ADEBUG << "Perception obstacle [" << perception_obstacle.id() << "] "
            << "was inserted";
   }
+  double end_time = Clock::NowInSeconds();
+  AINFO << "Insert " << perception_obstacles.perception_obstacle().size()
+        << " obstacles runtime (ms): "
+        << std::fixed << std::setprecision(9)
+	<< (end_time - start_time) * 1000.0;
 }
 
 Obstacle* ObstaclesContainer::GetObstacle(const int id) {

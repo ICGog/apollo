@@ -37,7 +37,7 @@ cc_library(
         "active_set_qp_solver.h",
     ],
     linkopts = [
-        "-lqp_oases",
+        "-lqpOASES",
     ],
     deps = [
         ":qp_solver",

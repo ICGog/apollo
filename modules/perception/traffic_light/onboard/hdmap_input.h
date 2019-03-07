@@ -43,6 +43,7 @@ class HDMapInput {
    */
   bool GetSignals(const Eigen::Matrix4d &pointd,
                   std::vector<apollo::hdmap::Signal> *signals);
+  std::string location();
 
  private:
   std::mutex mutex_;  // multi-thread init safe.

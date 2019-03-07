@@ -84,6 +84,9 @@ class RadarProcessSubnode : public Subnode {
   Eigen::Matrix4d radar_extrinsic_;
   Eigen::Matrix4d short_camera_extrinsic_;
 
+  uint32_t last_loc_seq_num_ = 0;
+  uint32_t last_rad_seq_num_ = 0;
+
   boost::circular_buffer<LocalizationPair> localization_buffer_;
   ContiRadarIDExpansion _conti_id_expansion;
   std::unique_ptr<BaseRadarDetector> radar_detector_;

@@ -76,7 +76,7 @@ class LidarProcessSubnode : public Subnode {
   common::ErrorCode error_code_ = common::OK;
   LidarObjectData* processing_data_ = nullptr;
   std::string device_id_;
-
+  uint32_t last_pc_seq_num_ = 0;
   HDMapInput* hdmap_input_ = nullptr;
   std::unique_ptr<BaseROIFilter> roi_filter_;
   std::unique_ptr<BaseSegmentation> segmentor_;

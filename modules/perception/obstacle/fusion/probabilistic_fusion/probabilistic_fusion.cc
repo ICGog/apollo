@@ -24,9 +24,12 @@
 #include "modules/perception/obstacle/fusion/probabilistic_fusion/pbf_base_track_object_matcher.h"
 #include "modules/perception/obstacle/fusion/probabilistic_fusion/pbf_hm_track_object_matcher.h"
 #include "modules/perception/obstacle/fusion/probabilistic_fusion/pbf_sensor_manager.h"
+#include "modules/common/time/time.h"
 
 namespace apollo {
 namespace perception {
+
+using ::apollo::common::time::Clock;
 
 ProbabilisticFusion::ProbabilisticFusion()
     : publish_sensor_id_("velodyne_64"),
@@ -162,6 +165,8 @@ bool ProbabilisticFusion::Init() {
 bool ProbabilisticFusion::Fuse(
     const std::vector<SensorObjects> &multi_sensor_objects,
     std::vector<ObjectPtr> *fused_objects) {
+  AINFO << "Fusion start";
+  double start_time = Clock::NowInSeconds();
   ACHECK(fused_objects != nullptr) << "parameter fused_objects is nullptr";
 
   std::vector<PbfSensorFramePtr> frames;
@@ -216,7 +221,9 @@ bool ProbabilisticFusion::Fuse(
     CollectFusedObjects(fusion_time, fused_objects);
     fusion_mutex_.unlock();
   }
-
+  double end_time = Clock::NowInSeconds();
+  AINFO << "Fusion runtime (ms): "
+	<< std::fixed << std::setprecision(9) << (end_time - start_time) * 1000.0;
   return true;
 }
 

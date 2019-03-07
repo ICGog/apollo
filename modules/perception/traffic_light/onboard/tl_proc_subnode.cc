@@ -104,6 +104,7 @@ bool TLProcSubnode::ProcEvent(const Event &event) {
   }
 
   SharedDataPtr<ImageLights> image_lights;
+  AINFO << "Get shared traffic light data for key: " << key;
   if (!preprocessing_data_->Get(key, &image_lights)) {
     AERROR << "TLProcSubnode failed to get shared data,"
            << " name:" << preprocessing_data_->name()
@@ -474,7 +475,7 @@ bool TLProcSubnode::PublishMessage(
   }
   if (FLAGS_output_debug_img) {
     char filename[200];
-    snprintf(filename, sizeof(filename), "img/%lf_%s.jpg",
+    snprintf(filename, sizeof(filename), "/apollo/img/%lf_%s.jpg",
              image_lights->image->ts(),
              image_lights->image->camera_id_str().c_str());
     for (size_t i = 0; i < lights->size(); i++) {
